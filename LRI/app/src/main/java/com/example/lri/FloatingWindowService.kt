@@ -91,7 +91,6 @@ class FloatingWindowService : LifecycleService() {
             initializeFaceLandmarker()
         }
 
-
         initCameraProvider()
 
         // ✅ 解除封印：載入真實的 LipReadingManager 與模型字典
@@ -282,7 +281,7 @@ class FloatingWindowService : LifecycleService() {
         }
     }
 
-    // ✅ 恢復原本的真實推論與處理邏輯
+    // ✅ 真實推論與處理邏輯 (已加入完整 Bitmap 回收機制)
     private fun processRecordedVideo(videoFile: File) {
         serviceScope.launch(Dispatchers.IO) {
             val rootDir = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "LRI_Processed_Frames")
@@ -335,13 +334,23 @@ class FloatingWindowService : LifecycleService() {
                                 if (top + height > rawFrame.height) height = rawFrame.height - top
 
                                 val cropped = Bitmap.createBitmap(rawFrame, left, top, width, height)
-                                toGrayscaleAndResize(cropped, 88, 88)
+                                val resized = toGrayscaleAndResize(cropped, 88, 88)
+
+                                // ✅ 記憶體優化 1：立刻回收過渡期的臉部裁切圖
+                                if (cropped != rawFrame) {
+                                    cropped.recycle()
+                                }
+
+                                resized
                             } else {
                                 val black = Bitmap.createBitmap(88, 88, Bitmap.Config.ARGB_8888)
                                 black.eraseColor(Color.BLACK)
                                 black
                             }
                             currentWordFrames.add(finalFrame)
+
+                            // ✅ 記憶體優化 2：立刻回收 MediaMetadataRetriever 吐出來的 360x640 原始大圖
+                            rawFrame.recycle()
                         }
                         targetTimeUs += stepUs
                     }
@@ -355,7 +364,6 @@ class FloatingWindowService : LifecycleService() {
                     }
 
                     if (currentWordFrames.isNotEmpty()) {
-                        val rootDir = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "LRI_Processed_Frames")
                         val wordDir = File(rootDir, "word_${index + 1}")
                         wordDir.mkdirs()
 
@@ -371,11 +379,24 @@ class FloatingWindowService : LifecycleService() {
             }
             retriever.release()
 
+            // 執行模型推論
             if (allWordsBitmaps.isNotEmpty()) {
                 val results = lipManager.recognizeSentence(allWordsBitmaps)
                 withContext(Dispatchers.Main) {
                     updateUICallback?.invoke(results)
                 }
+
+                // ✅ 記憶體優化 3：推論結束後，將存放在陣列裡的 88x88 小圖全數銷毀
+                allWordsBitmaps.forEach { wordList ->
+                    // 因為 Padding 會有重複參考同一個 Bitmap 的狀況，判斷未被 recycle 才進行回收
+                    wordList.forEach { bitmap ->
+                        if (!bitmap.isRecycled) {
+                            bitmap.recycle()
+                        }
+                    }
+                }
+                allWordsBitmaps.clear()
+
             } else {
                 withContext(Dispatchers.Main) {
                     updateUICallback?.invoke(listOf("無法辨識：未偵測到嘴部動作"))

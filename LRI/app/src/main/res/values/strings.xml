@@ -1,13 +1,13 @@
 <resources>
     <string name="app_name">LRI</string>
     <string name="accessibility_service_description">此服務用於唇語輸入法，將辨識結果自動填入文字框中。</string>
-    <string name="step1">1.點擊懸浮視窗後展開</string>
-    <string name="step2_1">2.點擊X按鈕收起懸浮視窗</string>
-    <string name="step2_2">3.點擊Record按鈕開始唇語輸入</string>
-    <string name="step3_1">4.白框變為紅眶表示錄影中</string>
-    <string name="step3_2">5.點擊Stop按鈕結束唇語輸入</string>
-    <string name="step3_3">6.要講到下一個字的時時</string>
-    <string name="step3_3_2">   按一次 Word Splitting 按鈕</string>
-    <string name="step4">7.點擊任一候選選字詞完成輸入</string>
-    <string name="FloatingWindowSwitch">懸浮視窗功能開關</string>
+    <string name="step1">1. Tap the floating window to expand it</string>
+    <string name="step2_1">2. Tap the X button to collapse the floating window</string>
+    <string name="step2_2">3. Tap Record to start lip-reading input</string>
+    <string name="step3_1">4. The frame turns red to indicate recording</string>
+    <string name="step3_2">5. Tap Stop to end lip-reading input</string>
+    <string name="step3_3">6. When moving on to the next</string>
+    <string name="step3_3_2">   character, tap Word Splitting once</string>
+    <string name="step4">7. Tap a candidate word to finish</string>
+    <string name="FloatingWindowSwitch">Floating Window Toggle</string>
 </resources>

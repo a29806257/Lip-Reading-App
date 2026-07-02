@@ -53,6 +53,7 @@ class LipReadingManager(private val context: Context) {
             tfliteInterpreter = Interpreter(mappedByteBuffer, options)
             isModelReady = true
             Log.d("LRI_DEBUG", "✅ TFLite 模型載入成功 (背景)")
+            benchmarkInference()
         } catch (e: Exception) {
             Log.e("LRI_DEBUG", "❌ TFLite 模型載入失敗", e)
         }
@@ -126,4 +127,45 @@ class LipReadingManager(private val context: Context) {
         byteBuffer.rewind()
         return byteBuffer
     }
+
+    fun benchmarkInference(warmup: Int = 10, iters: Int = 50) {
+        val interpreter = tfliteInterpreter
+        if (interpreter == null || !isModelReady) {
+            Log.e("LRI_BENCH", "模型尚未載入完成，無法測試")
+            return
+        }
+
+        // 1. 假輸入：大小跟真實前處理完全一樣（延遲跟數值無關，填 0 即可）
+        val bufferSize = 1 * NUM_FRAMES * INPUT_SIZE * INPUT_SIZE * 1 * 4
+        val input = ByteBuffer.allocateDirect(bufferSize).order(ByteOrder.nativeOrder())
+        val output = Array(1) { FloatArray(NUM_CLASSES) }
+
+        // 2. Warm-up：不計時，甩掉冷啟動
+        repeat(warmup) {
+            input.rewind()
+            interpreter.run(input, output)
+        }
+
+        // 3. 正式計時
+        val times = DoubleArray(iters)
+        repeat(iters) { i ->
+            input.rewind()
+            val t0 = System.nanoTime()
+            interpreter.run(input, output)
+            val t1 = System.nanoTime()
+            times[i] = (t1 - t0) / 1_000_000.0   // ns → ms
+        }
+
+        // 4. 統計
+        val mean = times.average()
+        val std = kotlin.math.sqrt(times.map { (it - mean) * (it - mean) }.average())
+        val sorted = times.sortedArray()
+        val median = sorted[iters / 2]
+        val p95 = sorted[(iters * 95 / 100).coerceAtMost(iters - 1)]
+
+        Log.i("LRI_BENCH", "=== 純模型推論延遲 (n=$iters, threads=4) ===")
+        Log.i("LRI_BENCH", "Mean=%.2f ms  Std=%.2f ms".format(mean, std))
+        Log.i("LRI_BENCH", "Median=%.2f  P95=%.2f  Min=%.2f  Max=%.2f".format(median, p95, sorted.first(), sorted.last()))
+    }
 }
+

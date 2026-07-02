@@ -18,7 +18,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,11 +75,13 @@ fun MainLayout(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("請先開啟無障礙服務以啟用自動填入功能", color = Color.Red)
+                Text("Please enable the accessibility service to use auto-fill", color = Color.Red,
+                    fontSize = 14.sp)
+
                 Button(onClick = {
                     context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                 }) {
-                    Text("前往設定")
+                    Text("Go to Settings")
                 }
             }
         }
@@ -142,7 +146,11 @@ fun Guid(modifier: Modifier = Modifier) {
                 contentDescription = "step2image"
             )
             Column(modifier = Modifier.weight(7f)) {
-                Text(text = stringResource(R.string.step2_1), fontSize = 15.sp)
+                Text(text = stringResource(R.string.step2_1), fontSize = 15.sp,
+                    style = TextStyle(
+                        textIndent = TextIndent(restLine = 17.sp)   // 第一行不縮，後續行縮 16.sp
+                    )
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(text = stringResource(R.string.step2_2), fontSize = 15.sp)
             }
@@ -176,7 +184,11 @@ fun Guid(modifier: Modifier = Modifier) {
                 contentDescription = "step3image"
             )
             Column(modifier = Modifier.weight(7f)) {
-                Text(text = stringResource(R.string.step3_1), fontSize = 15.sp)
+                Text(text = stringResource(R.string.step3_1), fontSize = 15.sp,
+                        style = TextStyle(
+                            textIndent = TextIndent(restLine = 17.sp)   // 第一行不縮，後續行縮 16.sp
+                        )
+                    )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(text = stringResource(R.string.step3_2), fontSize = 15.sp)
                 Spacer(modifier = Modifier.height(16.dp))
